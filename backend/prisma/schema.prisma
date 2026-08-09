@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  password          String
+  role              Role      @default(EMPLOYEE)
+  refreshTokenHash  String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  assignedTasks     Task[]    @relation("AssignedTasks")
+  createdTasks      Task[]    @relation("CreatedTasks")
+  createdCustomers  Customer[] @relation("CreatedCustomers")
+  createdInteractions Interaction[] @relation("CreatedInteractions")
+  createdSales      Sale[]    @relation("CreatedSales")
+
+  @@map("users")
+}
+
+model Task {
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  status       TaskStatus @default(TODO)
+  priority     Priority   @default(MEDIUM)
+  dueDate      DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  assignee     User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  assigneeId   String?
+
+  createdBy    User       @relation("CreatedTasks", fields: [createdById], references: [id])
+  createdById  String
+
+  @@map("tasks")
+}
+
+enum InteractionType {
+  EMAIL
+  CALL
+  MEETING
+  NOTE
+}
+
+enum SaleStatus {
+  PROSPECT
+  QUALIFIED
+  NEGOTIATION
+  WON
+  LOST
+}
+
+model Customer {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  phone        String?
+  company      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  createdBy    User          @relation("CreatedCustomers", fields: [createdById], references: [id])
+  createdById  String
+
+  contacts     Contact[]
+  interactions Interaction[]
+  sales        Sale[]
+
+  @@map("customers")
+}
+
+model Contact {
+  id           String        @id @default(uuid())
+  name         String
+  email        String?
+  phone        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  customerId   String
+
+  interactions Interaction[]
+
+  @@map("contacts")
+}
+
+model Interaction {
+  id           String          @id @default(uuid())
+  type         InteractionType
+  note         String
+  occurredAt   DateTime        @default(now())
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  customer     Customer?       @relation(fields: [customerId], references: [id])
+  customerId   String?
+
+  contact      Contact?        @relation(fields: [contactId], references: [id])
+  contactId    String?
+
+  sale         Sale?           @relation(fields: [saleId], references: [id])
+  saleId       String?
+
+  createdBy    User            @relation("CreatedInteractions", fields: [createdById], references: [id])
+  createdById  String
+
+  @@map("interactions")
+}
+
+model Sale {
+  id           String       @id @default(uuid())
+  title        String
+  amount       Float
+  status       SaleStatus   @default(PROSPECT)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  customerId   String
+
+  createdBy    User         @relation("CreatedSales", fields: [createdById], references: [id])
+  createdById  String
+
+  interactions Interaction[]
+
+  @@map("sales")
+}
