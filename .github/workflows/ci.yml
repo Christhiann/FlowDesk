@@ -52,10 +52,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Prisma generate + migrate
+      - name: Prisma generate + push schema
         run: |
           npx prisma generate
-          npx prisma migrate deploy
+          npx prisma db push --accept-data-loss
 
       - name: Unit tests
         run: npm test -- --coverage
