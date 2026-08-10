@@ -1,108 +1,96 @@
-# FlowDesk — SaaS de Gestão Empresarial (MVP funcional)
+# FlowDesk — SaaS de Gestão Empresarial (MVP)
 
-Sistema completo de gestão com autenticação, autorização por papéis (RBAC),
-módulo de tarefas Kanban, CRM mínimo, vendas, notificações em tempo real,
-Docker e deploy-ready.
+FlowDesk é um sistema fullstack de gestão empresarial com:
+- autenticação JWT + refresh token
+- autorização por papéis (RBAC)
+- Kanban de tarefas
+- CRM de clientes, contatos e interações
+- módulo de vendas e estatísticas
+- notificações em tempo real com WebSocket
+- Docker Compose para ambiente local integrado
 
-Este projeto mostra uma stack fullstack funcional: backend NestJS + Prisma,
-frontend Next.js + Tailwind, e Docker Compose para criar um ambiente local
-integrado.
+Esta aplicação foi construída com:
+- Backend: NestJS 10, Prisma, PostgreSQL, Redis, Socket.IO
+- Frontend: Next.js 14 App Router, TypeScript, Tailwind CSS
+- Testes: Jest, Supertest
 
-## O que foi alterado / implementado
-- Adicionado suporte a CRM no backend com modelos Prisma:
-  `Customer`, `Contact`, `Interaction`, `Sale`.
-- Criadas APIs REST de CRUD para clientes, contatos, interações e vendas.
-- Atualizado o frontend com telas de CRM e dashboards de vendas.
-- Incluídos gráficos de receita e status de vendas via `recharts`.
-- Adicionada funcionalidade de notificações em tempo real via WebSocket
-  (`Socket.IO`) para reatribuição de tarefas.
-- A seed foi ajustada para popular dados de teste e evitar buscas por campos não únicos.
-- O Docker Compose agora sobe toda a stack e executa `prisma db push` + seed no backend.
-- Adicionado suporte de roles e regras de negócio: colaboradores só alteram tarefas
-  próprias; admin/manager gerenciam tudo.
+---
 
-## O que já funciona
-- Autenticação completa com email/senha e tokens JWT
-- Refresh token em cookie `httpOnly` e rotativo
-- Logout com invalidação de refresh token
-- Permissões RBAC para rotas e operações de negócio
-- Board Kanban de tarefas com criação, edição, reatribuição e status
-- CRM básico de clientes, contatos e histórico de interações
-- Gestão de vendas com `Sale`, status e visualização de estatísticas
-- Notificações realtime para reatribuição de tarefa
-- Testes E2E de interface de usuário com Cypress
-- Containerização com Docker Compose
+## Visão geral do projeto
 
-## O que ainda falta
-- Nenhum item crítico de front-end; foco em melhorias incrementais e cobertura adicional de testes
+O repositório é composto por duas pastas principais:
 
-## Stack
+- `backend/`: API REST com lógica de negócio, autenticação e autorização.
+- `frontend/`: interface web construída com Next.js.
+- `docker-compose.yml`: orquestra Postgres, Redis, backend e frontend.
 
-| Camada       | Tecnologias |
-|--------------|-------------|
-| Frontend     | Next.js 14 (App Router) · TypeScript · Tailwind CSS |
-| Backend      | NestJS 10 · TypeScript · Passport JWT · Prisma |
-| Banco        | PostgreSQL |
-| Cache        | Redis |
-| WebSocket    | Socket.IO |
-| Testes       | Jest · Supertest |
-| Infra        | Docker · Docker Compose |
+O backend expõe endpoints para tarefas, clientes, contatos, interações, vendas e autenticação. O frontend consome a API e apresenta dashboards, CRM e Kanban.
 
-## Funcionalidades
+---
 
-**Autenticação**
-- Cadastro e login com senha hasheada (bcrypt)
-- Access token JWT (15 min) + refresh token JWT (7 dias)
-- Refresh token armazenado como hash no banco
-- Logout que invalida refresh token
-- Recuperação de senha com token de expiração
+## Recursos implementados
 
-**Autorização (RBAC)**
+### Autenticação e segurança
+- Registro / login com senha hasheada via `bcrypt`
+- Access token JWT com validade curta
+- Refresh token JWT rotativo armazenado como hash no banco
+- Logout que invalida o refresh token
+- Proteção de rotas via `AuthGuard`
+
+### Autorização (RBAC)
 - Papéis: `ADMIN`, `MANAGER`, `EMPLOYEE`
-- Guards com `@Roles(...)`
-- Regras adicionais no serviço: colaboradores só vêem e movem tarefas próprias
+- Guards e decoradores para proteger endpoints por papel
+- Regras de negócio no serviço de tarefas: colaboradores só veem e alteram tarefas próprias
 
-**Tarefas (Kanban)**
-- Criação, edição, exclusão e reatribuição de tarefas
-- Colunas: A fazer → Em andamento → Revisão → Concluído
-- Prioridade, descrição, prazo, responsável
-- Drag-and-drop para mover tarefas entre colunas
+### Módulo de Tarefas (Kanban)
+- CRUD completo de tarefas
+- Fluxo de status e atualização por Kanban
+- Reatribuição de tarefas com notificação em tempo real
+- Filtragem por prioridade, status e responsável
 
-**CRM e Vendas**
-- Clientes com contatos e histórico de interações
-- Vendas associadas a clientes e usuários
+### CRM e Vendas
+- Gestão de clientes, contatos e interações
+- Registro de vendas com status e valor
 - Dashboard de vendas com gráficos de receita e status
 
-**Notificações em tempo real**
-- WebSocket de backend para enviar alertas quando tarefa é reatribuída
-- Frontend preparado para receber eventos de notificação
+### Notificações em tempo real
+- WebSocket com `Socket.IO`
+- Backend notifica usuário quando tarefa é reatribuída
 
-## Rodando localmente com Docker
+---
+
+## Como rodar o projeto
+
+### Com Docker
 
 ```bash
 docker compose up --build
 ```
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:3001
-- Swagger: http://localhost:3001/docs
+A aplicação ficará disponível em:
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:3001`
+- Swagger: `http://localhost:3001/docs`
 
-O `docker-compose.yml` sobe Postgres, Redis, backend e frontend. O backend
-executa `prisma db push` e `prisma db seed` automaticamente.
+O `backend` executa automaticamente:
+- `npx prisma db push --accept-data-loss`
+- `npx prisma db seed`
 
-## Rodando sem Docker
+### Sem Docker
 
-**Backend**
+#### Backend
+
 ```bash
 cd backend
-cp .env.example .env      # ajuste DATABASE_URL se necessário
+cp .env.example .env
 npm install
-npx prisma migrate dev    # cria as tabelas
-npx prisma db seed        # popula dados de teste
+npx prisma migrate dev
+npx prisma db seed
 npm run start:dev
 ```
 
-**Frontend**
+#### Frontend
+
 ```bash
 cd frontend
 cp .env.example .env
@@ -110,64 +98,94 @@ npm install
 npm run dev
 ```
 
-Você precisa de um Postgres rodando localmente ou pode subir apenas o banco
-via Docker: `docker compose up postgres redis`.
+> Se preferir, pode subir apenas Postgres e Redis via Docker com `docker compose up postgres redis`.
 
-## Usuários de teste (criados pelo seed)
-
-| E-mail                  | Senha       | Papel       |
-|--------------------------|-------------|-------------|
-| admin@flowdesk.com       | Senha@123   | Admin       |
-| manager@flowdesk.com     | Senha@123   | Manager     |
-| employee@flowdesk.com    | Senha@123   | Employee    |
+---
 
 ## Testes
 
+### Backend
+
 ```bash
 cd backend
-npm test           # unitários
-npm run test:e2e   # testes de integração/backend
+npm run lint
+npm test
+npm run test:e2e
 ```
 
-## Deploy sugerido
+### Frontend
 
-1. Configure um Postgres em Railway/Supabase.
-2. Faça deploy do backend apontando `DATABASE_URL`, `JWT_ACCESS_SECRET`,
-   `JWT_REFRESH_SECRET` e `FRONTEND_URL`.
-3. Execute `npx prisma migrate deploy` no backend.
-4. Faça deploy do frontend no Vercel com `NEXT_PUBLIC_API_URL` apontando para o backend.
+```bash
+cd frontend
+npm run lint
+```
 
-## Estrutura do projeto
+---
+
+## Usuários de teste
+
+Estes usuários são criados pelo seed do backend:
+
+| Email | Senha | Papel |
+|---|---|---|
+| `admin@flowdesk.com` | `Senha@123` | ADMIN |
+| `manager@flowdesk.com` | `Senha@123` | MANAGER |
+| `employee@flowdesk.com` | `Senha@123` | EMPLOYEE |
+
+---
+
+## Estrutura do repositório
 
 ```
-flowdesk/
-├── backend/            # API NestJS
+flowdesk2/
+├── backend/
 │   ├── src/
-│   │   ├── auth/       # registro, login, refresh, RBAC
-│   │   ├── users/
-│   │   ├── tasks/
+│   │   ├── auth/
 │   │   ├── customers/
-│   │   ├── sales/
 │   │   ├── notifications/
-│   │   └── prisma/
-│   ├── prisma/         # schema.prisma + seed.js
-│   └── test/           # testes e2e
-├── frontend/           # Next.js App Router
-│   └── src/
-│       ├── app/
-│       ├── components/
-│       └── lib/
+│   │   ├── prisma/
+│   │   ├── sales/
+│   │   ├── tasks/
+│   │   └── users/
+│   ├── prisma/
+│   └── test/
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── types/
 ├── docker-compose.yml
 └── README.md
 ```
 
-## O que o projeto prova
-- Construção de API segura com autenticação JWT e refresh token rotativo
-- Autorização por papéis com regras de negócio no backend
-- Desenvolvimento de board Kanban e CRM integrado
-- Uso de Prisma para modelagem de dados e seed de teste
-- Containerização da aplicação com Docker Compose
+---
 
-## Roadmap (ainda não implementado)
+## Fluxo de CI
 
-- Testes E2E de UI com Cypress
+A pipeline de CI do GitHub Actions executa:
+- `npm install`
+- `npm run lint`
+- `npx prisma generate`
+- `npx prisma db push --accept-data-loss`
+- `npm test -- --coverage`
+- `npm run test:e2e`
+- `npm run build` (frontend)
+
+---
+
+## Observações para avaliadores
+
+- A solução demonstra backend e frontend integrados em um monorepo.
+- Prisma é usado para modelagem de dados e geração de client.
+- O projeto usa Docker Compose para facilitar ambiente local.
+- A lógica de negócio valida papéis e permissões antes de executar ações.
+- O frontend consome a API e apresenta funcionalidades de CRM e Kanban.
+
+---
+
+## Melhorias futuras
+
+- Cobertura de testes E2E de UI com Cypress
+- Autenticação social / SSO
+- Relatórios avançados de vendas e funil
+- Paginação e busca em listagens
