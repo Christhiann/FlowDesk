@@ -66,12 +66,12 @@ export class AuthController {
   }
 
   private setRefreshCookie(res: Response, refreshToken: string) {
-    res.cookie(REFRESH_COOKIE, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: REFRESH_COOKIE_MAX_AGE,
-      path: '/',
-    });
-  }
+  res.cookie(REFRESH_COOKIE, refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+    path: '/',
+  });
+}
 }
