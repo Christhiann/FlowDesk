@@ -15,6 +15,7 @@ describe('TasksService', () => {
       delete: jest.Mock;
     };
   };
+  let notificationsGateway: { notifyTaskReassigned: jest.Mock };
 
   const manager = { id: 'mgr-1', email: 'mgr@flowdesk.com', role: Role.MANAGER };
   const employee = { id: 'emp-1', email: 'emp@flowdesk.com', role: Role.EMPLOYEE };
@@ -31,8 +32,16 @@ describe('TasksService', () => {
       },
     };
 
+    notificationsGateway = {
+      notifyTaskReassigned: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TasksService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        TasksService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: NotificationsGateway, useValue: notificationsGateway },
+      ],
     }).compile();
 
     service = module.get<TasksService>(TasksService);
