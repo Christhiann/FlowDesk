@@ -18,8 +18,7 @@ export class SalesService {
     start.setDate(1);
     start.setHours(0, 0, 0, 0);
 
-    const stats = await this.prisma.$queryRaw<SaleStatsRow[]>
-      `
+    const stats = await this.prisma.$queryRaw<SaleStatsRow[]>`
       SELECT
         date_trunc('month', "createdAt") AS month,
         COUNT(*) AS count,

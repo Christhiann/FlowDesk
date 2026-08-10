@@ -1,4 +1,4 @@
-import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayInit, ConnectedSocket } from '@nestjs/websockets';
+import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayInit } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -51,7 +51,7 @@ export class NotificationsGateway implements OnGatewayInit {
   }
 
   @SubscribeMessage('ping')
-  handlePing(@MessageBody() data: any, @ConnectedSocket() socket: Socket) {
+  handlePing(@MessageBody() data: any) {
     return { event: 'pong', data };
   }
 }
